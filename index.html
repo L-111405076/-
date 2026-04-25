@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新店區空氣品質分析儀表板</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f8fafc; font-family: "Microsoft JhengHei", sans-serif; }
+        /* 統一圖表高度與間隔 */
+        .chart-container { position: relative; width: 100%; height: 350px; }
+        .main-chart-container { position: relative; width: 100%; height: 500px; }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-7xl mx-auto grid grid-cols-12 gap-6">
+        
+        <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex-1">
+                <h3 class="text-gray-500 text-sm font-bold mb-2">PM2.5 達標天數百分比 (≤15.4)</h3>
+                <div id="bigNumber" class="text-6xl font-black transition-colors duration-500">--%</div>
+                <div id="alertText" class="mt-4 px-3 py-2 rounded-lg font-bold text-center">載入中...</div>
+                <div id="guideBox" class="mt-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600 border-l-4 border-gray-300">
+                    載入指引資訊中...
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex-1">
+                <h3 class="text-gray-700 font-bold mb-4 text-center">優質天數佔比</h3>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-span-12 lg:col-span-8 space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">年度 PM2.5 趨勢總覽</h3>
+                        <p class="text-sm text-gray-400">點擊下方長條圖或下拉選單切換年份</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <select id="yearSelect" class="border rounded px-2 py-1 text-sm bg-gray-50">
+                            <option value="2025">2025 年度</option>
+                            <option value="2024">2024 年度</option>
+                            <option value="2023">2023 年度</option>
+                        </select>
+                        <span class="text-xs text-gray-400 font-bold">單位：µg/m³</span>
+                    </div>
+                </div>
+                
+                <div class="main-chart-container">
+                    <canvas id="lineChart"></canvas>
+                </div>
+
+                <hr class="my-8">
+
+                <h4 class="text-center font-bold text-gray-600 mb-4">歷年平均濃度比較 (可點擊互動)</h4>
+                <div style="height: 200px;">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
+                <p class="text-sm text-gray-400">閱聽人對象：新店遊客、減汙研究人員、房地產投資者</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模擬多年份數據
+        const yearlyData = {
+            "2025": {
+                attainRate: 85,
+                avgPM: 12.8,
+                history: [18.2, 16.5, 14.1, 11.2, 9.8, 10.5, 12.1, 11.8, 13.5, 15.2, 17.8, 19.1]
+            },
+            "2024": {
+                attainRate: 78,
+                avgPM: 14.5,
+                history: [20.1, 18.2, 15.5, 12.8, 11.2, 12.5, 13.8, 13.2, 14.5, 16.8, 19.5, 21.2]
+            },
+            "2023": {
+                attainRate: 72,
+                avgPM: 16.2,
+                history: [22.5, 20.8, 18.2, 15.1, 13.5, 14.2, 15.8, 15.1, 16.5, 18.2, 21.5, 23.8]
+            }
+        };
+
+        let lineChart, pieChart, barChart;
+
+        function updateDashboard(year) {
+            const data = yearlyData[year];
+            
+            // 更新數字與文字
+            updateBigNumber(data.attainRate);
+            updateAlert(data.avgPM);
+
+            // 更新曲線圖
+            lineChart.data.datasets[0].label = `${year}年度 PM2.5 平均值`;
+            lineChart.data.datasets[0].data = data.history;
+            lineChart.update();
+
+            // 更新圓餅圖
+            pieChart.data.datasets[0].data = [data.attainRate, 100 - data.attainRate];
+            pieChart.update();
+        }
+
+        function updateBigNumber(rate) {
+            const el = document.getElementById('bigNumber');
+            el.innerText = rate + '%';
+            el.style.color = rate >= 80 ? '#22c55e' : (rate >= 60 ? '#eab308' : '#ef4444');
+        }
+
+        function updateAlert(pm) {
+            const alertEl = document.getElementById('alertText');
+            const guideEl = document.getElementById('guideBox');
+            if (pm <= 15.4) {
+                alertEl.innerText = "良好";
+                alertEl.className = "mt-4 px-3 py-2 rounded-lg font-bold text-center bg-green-100 text-green-800";
+                guideEl.innerText = "✅ 優良 (0-15)：空氣品質良好，可正常戶外活動。";
+            } else {
+                alertEl.innerText = "普通";
+                alertEl.className = "mt-4 px-3 py-2 rounded-lg font-bold text-center bg-yellow-100 text-yellow-800";
+                guideEl.innerText = "⚠ 提醒 (16-35)：敏感族群建議佩戴口罩。";
+            }
+        }
+
+        window.onload = function() {
+            // 1. 初始化圓餅圖
+            pieChart = new Chart(document.getElementById('pieChart'), {
+                type: 'pie',
+                data: {
+                    labels: ['良好', '普通及以下'],
+                    datasets: [{ data: [85, 15], backgroundColor: ['#22c55e', '#ef4444'] }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+
+            // 2. 初始化曲線圖 (已移除 X 軸標籤後的單位)
+            lineChart = new Chart(document.getElementById('lineChart'), {
+                type: 'line',
+                data: {
+                    labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
+                    datasets: [{
+                        label: '2025年度 PM2.5 平均值',
+                        data: yearlyData["2025"].history,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: (v) => v } },
+                        x: { grid: { display: false } } // 移除 X 軸雜訊
+                    }
+                }
+            });
+
+            // 3. 初始化長條圖 (互動功能)
+            barChart = new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['2023', '2024', '2025'],
+                    datasets: [{
+                        label: '年平均 PM2.5',
+                        data: [16.2, 14.5, 12.8],
+                        backgroundColor: ['#cbd5e1', '#cbd5e1', '#3b82f6'] // 預設高亮 2025
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const selectedYear = barChart.data.labels[index];
+                            document.getElementById('yearSelect').value = selectedYear;
+                            updateDashboard(selectedYear);
+                            
+                            // 改變長條顏色高亮
+                            barChart.data.datasets[0].backgroundColor = barChart.data.labels.map((_, i) => i === index ? '#3b82f6' : '#cbd5e1');
+                            barChart.update();
+                        }
+                    }
+                }
+            });
+
+            // 綁定下拉選單
+            document.getElementById('yearSelect').addEventListener('change', (e) => {
+                updateDashboard(e.target.value);
+            });
+
+            updateDashboard("2025");
+        };
+    </script>
+</body>
+</html>
