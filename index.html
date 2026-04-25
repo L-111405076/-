@@ -7,47 +7,54 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #f8fafc; font-family: "Microsoft JhengHei", sans-serif; }
-        .chart-container { position: relative; width: 100%; height: 300px; }
-        .main-chart-container { position: relative; width: 100%; height: 450px; }
+        body { background-color: #f8fafc; font-family: "Microsoft JhengHei", sans-serif; overflow-x: hidden; }
+        /* 縮小高度以達成一屏可見 */
+        .chart-container { position: relative; width: 100%; height: 180px; }
+        .main-chart-container { position: relative; width: 100%; height: 320px; }
+        .bar-chart-container { position: relative; width: 100%; height: 180px; }
     </style>
 </head>
-<body class="p-6">
-    <div class="max-w-7xl mx-auto grid grid-cols-12 gap-6">
+<body class="p-4 lg:p-6">
+    <div class="max-w-7xl mx-auto grid grid-cols-12 gap-4">
         
-        <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex-1">
-                <h3 id="attainTitle" class="text-gray-500 text-sm font-bold mb-2">三年平均 PM2.5 達標率</h3>
-                <div id="bigNumber" class="text-6xl font-black transition-colors duration-500">--%</div>
-                <div id="alertText" class="mt-4 px-3 py-2 rounded-lg font-bold text-center">計算中...</div>
-                <div id="guideBox" class="mt-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600 border-l-4 border-gray-300">
-                    載入指引資訊中...
+        <div class="col-span-12 lg:col-span-3 flex flex-col gap-4">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <h3 id="attainTitle" class="text-gray-500 text-xs font-bold mb-1">PM2.5 達標率</h3>
+                <div id="bigNumber" class="text-5xl font-black transition-all duration-300">--%</div>
+                <div id="statusLabel" class="text-sm font-bold text-gray-400 mt-1">全年度平均</div>
+                <div id="alertText" class="mt-3 px-2 py-1 rounded-lg font-bold text-sm text-center">計算中...</div>
+                <div id="guideBox" class="mt-3 p-2 bg-gray-50 rounded-lg text-xs text-gray-500 border-l-4 border-gray-300">
+                    載入中...
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex-1">
-                <h3 class="text-gray-700 font-bold mb-4 text-center">優質天數佔比</h3>
-                <div class="chart-container" style="height: 250px;">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-gray-700 text-sm font-bold mb-2 text-center">優質天數佔比</h3>
+                <div class="chart-container">
                     <canvas id="pieChart"></canvas>
                 </div>
             </div>
+            
+            <div class="hidden lg:block bg-blue-50 p-3 rounded-xl border border-blue-100">
+                <p class="text-[10px] text-blue-400 leading-tight">閱聽對象：新店遊客、減汙研究員、房產投資者</p>
+            </div>
         </div>
 
-        <div class="col-span-12 lg:col-span-8 space-y-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <div class="flex justify-between items-center mb-6">
+        <div class="col-span-12 lg:col-span-9 space-y-4">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-start mb-4">
                     <div>
-                        <h3 id="mainTitle" class="text-xl font-bold text-gray-800">2023-2025 PM2.5 趨勢總覽 (三年平均)</h3>
-                        <p class="text-sm text-gray-400">使用下拉選單篩選特定年份資料</p>
+                        <h3 id="mainTitle" class="text-lg font-bold text-gray-800">PM2.5 趨勢總覽 (三年平均)</h3>
+                        <p class="text-xs text-gray-400">點擊長條圖可查看特定月份詳情</p>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <select id="yearFilter" class="border rounded px-3 py-1 text-sm bg-blue-50 border-blue-200 font-bold text-blue-700">
+                    <div class="flex items-center gap-3">
+                        <select id="yearFilter" class="border rounded px-2 py-1 text-xs bg-white border-gray-300 font-bold">
                             <option value="all">顯示三年平均</option>
                             <option value="2025">2025 年度</option>
                             <option value="2024">2024 年度</option>
                             <option value="2023">2023 年度</option>
                         </select>
-                        <span class="text-xs text-gray-400 font-bold">單位：µg/m³</span>
+                        <span class="text-[10px] text-gray-400 font-bold">µg/m³</span>
                     </div>
                 </div>
                 
@@ -55,16 +62,12 @@
                     <canvas id="lineChart"></canvas>
                 </div>
 
-                <hr class="my-8">
+                <div class="my-4 border-t border-gray-50"></div>
 
-                <h4 id="barTitle" class="text-center font-bold text-gray-600 mb-4">月份平均濃度分布 (2023-2025)</h4>
-                <div style="height: 250px;">
+                <h4 id="barTitle" class="text-center text-sm font-bold text-gray-500 mb-2">月份平均濃度分布 (點擊月份連動左側)</h4>
+                <div class="bar-chart-container">
                     <canvas id="barChart"></canvas>
                 </div>
-            </div>
-            
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 text-center">
-                <p class="text-sm text-gray-400">閱聽人對象：新店遊客、減汙研究人員、房地產投資者</p>
             </div>
         </div>
     </div>
@@ -77,67 +80,61 @@
         };
 
         const monthLabels = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-        
-        // 計算三年平均
-        const avgData = monthLabels.map((_, i) => {
-            return parseFloat(((rawData["2023"][i] + rawData["2024"][i] + rawData["2025"][i]) / 3).toFixed(1));
-        });
+        const avgData = monthLabels.map((_, i) => parseFloat(((rawData["2023"][i] + rawData["2024"][i] + rawData["2025"][i]) / 3).toFixed(1)));
 
         let lineChart, pieChart, barChart;
+        let currentYear = 'all';
 
-        function updateDashboard(filter) {
-            let currentData, titleSuffix, attainRate;
+        // 模擬從 PM2.5 數值計算達標率的函數
+        function calculateAttainRate(pmValue) {
+            if (pmValue <= 12) return 95;
+            if (pmValue <= 15.4) return 85;
+            if (pmValue <= 25) return 65;
+            return 45;
+        }
+
+        function updateSidePanel(pmValue, label) {
+            const rate = calculateAttainRate(pmValue);
+            document.getElementById('bigNumber').innerText = rate + '%';
+            document.getElementById('statusLabel').innerText = label;
             
-            if (filter === 'all') {
-                currentData = avgData;
-                titleSuffix = "(三年平均)";
-                attainRate = 78; // 假設的三年總平均達標率
-                document.getElementById('attainTitle').innerText = "三年平均 PM2.5 達標率";
+            const el = document.getElementById('bigNumber');
+            el.style.color = rate >= 85 ? '#22c55e' : (rate >= 70 ? '#eab308' : '#ef4444');
+
+            const alertEl = document.getElementById('alertText');
+            const guideEl = document.getElementById('guideBox');
+            if (pmValue <= 15.4) {
+                alertEl.innerText = "良好";
+                alertEl.className = "mt-3 px-2 py-1 rounded-lg font-bold text-sm text-center bg-green-100 text-green-800";
+                guideEl.innerText = "✅ 品質優良，適合戶外運動。";
             } else {
-                currentData = rawData[filter];
-                titleSuffix = `(${filter}年度)`;
-                attainRate = filter === "2025" ? 85 : (filter === "2024" ? 78 : 72);
-                document.getElementById('attainTitle').innerText = `${filter}年度 PM2.5 達標率`;
+                alertEl.innerText = "普通";
+                alertEl.className = "mt-3 px-2 py-1 rounded-lg font-bold text-sm text-center bg-yellow-100 text-yellow-800";
+                guideEl.innerText = "⚠ 敏感族群請適度防護。";
             }
 
-            const avgPM = (currentData.reduce((a, b) => a + b, 0) / 12).toFixed(1);
-
-            // 更新介面文字
-            document.getElementById('mainTitle').innerText = `PM2.5 趨勢總覽 ${titleSuffix}`;
-            document.getElementById('barTitle').innerText = `月份平均濃度分布 ${titleSuffix}`;
-            updateBigNumber(attainRate);
-            updateAlert(avgPM);
-
-            // 更新圖表
-            lineChart.data.datasets[0].label = `PM2.5 濃度 ${titleSuffix}`;
-            lineChart.data.datasets[0].data = currentData;
-            lineChart.update();
-
-            barChart.data.datasets[0].data = currentData;
-            barChart.update();
-
-            pieChart.data.datasets[0].data = [attainRate, 100 - attainRate];
+            pieChart.data.datasets[0].data = [rate, 100 - rate];
             pieChart.update();
         }
 
-        function updateBigNumber(rate) {
-            const el = document.getElementById('bigNumber');
-            el.innerText = rate + '%';
-            el.style.color = rate >= 80 ? '#22c55e' : (rate >= 60 ? '#eab308' : '#ef4444');
-        }
+        function updateDashboard(year) {
+            currentYear = year;
+            const data = year === 'all' ? avgData : rawData[year];
+            const titleSuffix = year === 'all' ? "(三年平均)" : `(${year}年度)`;
+            
+            document.getElementById('mainTitle').innerText = `PM2.5 趨勢總覽 ${titleSuffix}`;
+            document.getElementById('attainTitle').innerText = year === 'all' ? "三年平均達標率" : `${year}年度達標率`;
 
-        function updateAlert(pm) {
-            const alertEl = document.getElementById('alertText');
-            const guideEl = document.getElementById('guideBox');
-            if (pm <= 15.4) {
-                alertEl.innerText = "良好";
-                alertEl.className = "mt-4 px-3 py-2 rounded-lg font-bold text-center bg-green-100 text-green-800";
-                guideEl.innerText = "✅ 優良 (0-15)：空氣品質良好。";
-            } else {
-                alertEl.innerText = "普通";
-                alertEl.className = "mt-4 px-3 py-2 rounded-lg font-bold text-center bg-yellow-100 text-yellow-800";
-                guideEl.innerText = "⚠ 提醒 (16-35)：敏感族群注意。";
-            }
+            lineChart.data.datasets[0].data = data;
+            lineChart.update();
+
+            barChart.data.datasets[0].data = data;
+            // 重置長條圖顏色
+            barChart.data.datasets[0].backgroundColor = data.map(() => '#cbd5e1');
+            barChart.update();
+
+            const yearAvg = (data.reduce((a, b) => a + b, 0) / 12).toFixed(1);
+            updateSidePanel(yearAvg, "全年度平均");
         }
 
         window.onload = function() {
@@ -149,38 +146,47 @@
                     datasets: [{
                         data: avgData,
                         borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.05)',
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        pointRadius: 3
                     }]
                 },
                 options: {
                     maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                        x: { grid: { display: false } }
-                    },
+                    scales: { y: { beginAtZero: true }, x: { grid: { display: false } } },
                     plugins: { legend: { display: false } }
                 }
             });
 
-            // 月份長條圖
+            // 長條圖 (含點擊連動功能)
             barChart = new Chart(document.getElementById('barChart'), {
                 type: 'bar',
                 data: {
                     labels: monthLabels,
                     datasets: [{
                         data: avgData,
-                        backgroundColor: '#94a3b8',
+                        backgroundColor: '#cbd5e1',
+                        hoverBackgroundColor: '#3b82f6',
                         borderRadius: 4
                     }]
                 },
                 options: {
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { 
-                        x: { grid: { display: false } },
-                        y: { beginAtZero: true }
+                    scales: { x: { grid: { display: false } }, y: { beginAtZero: true } },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const monthData = barChart.data.datasets[0].data[index];
+                            
+                            // 更新選中顏色
+                            barChart.data.datasets[0].backgroundColor = barChart.data.datasets[0].data.map((_, i) => i === index ? '#3b82f6' : '#cbd5e1');
+                            barChart.update();
+                            
+                            // 連動左側面板
+                            updateSidePanel(monthData, `${monthLabels[index]} 數據`);
+                        }
                     }
                 }
             });
@@ -190,9 +196,12 @@
                 type: 'pie',
                 data: {
                     labels: ['良好', '普通以下'],
-                    datasets: [{ data: [78, 22], backgroundColor: ['#22c55e', '#ef4444'] }]
+                    datasets: [{ data: [78, 22], backgroundColor: ['#22c55e', '#ef4444'], borderWidth: 0 }]
                 },
-                options: { maintainAspectRatio: false }
+                options: { 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
+                }
             });
 
             document.getElementById('yearFilter').addEventListener('change', (e) => {
