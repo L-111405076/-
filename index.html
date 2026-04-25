@@ -45,7 +45,7 @@
             <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <h3 id="mainTitle" class="text-lg font-bold text-gray-800">PM2.5 趨勢總覽</h3>
+                        <h3 class="text-lg font-bold text-gray-800">PM2.5 趨勢總覽</h3>
                         <div id="mainSub" class="sub-text">2023-2025年平均</div>
                     </div>
                     <div class="flex items-center gap-3">
@@ -65,7 +65,7 @@
 
                 <div class="my-4 border-t border-gray-50"></div>
 
-                <h4 class="text-center text-sm font-bold text-gray-500">月份平均濃度分布</h4>
+                <h3 class="text-gray-800 text-sm font-bold text-center">月份平均濃度分布</h3>
                 <div id="barSub" class="sub-text text-center mb-2">2023-2025年平均</div>
                 <div class="bar-chart-container">
                     <canvas id="barChart"></canvas>
@@ -94,18 +94,14 @@
             return 45;
         }
 
-        // 更新 UI 副標題與標註文字
-        function updateSubtexts(label) {
-            document.getElementById('attainSub').innerText = label;
-            document.getElementById('pieSub').innerText = label;
-            document.getElementById('mainSub').innerText = label;
-            document.getElementById('barSub').innerText = label;
-        }
-
         function updateSidePanel(pmValue, contextLabel) {
             const rate = calculateAttainRate(pmValue);
             document.getElementById('bigNumber').innerText = rate + '%';
-            updateSubtexts(contextLabel);
+            
+            // 更新除了趨勢總覽以外的副標題
+            document.getElementById('attainSub').innerText = contextLabel;
+            document.getElementById('pieSub').innerText = contextLabel;
+            document.getElementById('barSub').innerText = contextLabel;
             
             const el = document.getElementById('bigNumber');
             el.style.color = rate >= 85 ? '#22c55e' : (rate >= 70 ? '#eab308' : '#ef4444');
@@ -131,6 +127,9 @@
             const data = year === 'all' ? avgData : rawData[year];
             const yearLabel = year === 'all' ? "2023-2025年平均" : `${year}年度`;
             
+            // 更新趨勢總覽副標題 (僅在切換年份時變動)
+            document.getElementById('mainSub').innerText = yearLabel;
+
             lineChart.data.datasets[0].data = data;
             lineChart.update();
 
@@ -142,7 +141,6 @@
             updateSidePanel(yearAvg, yearLabel);
         }
 
-        // 點擊空白處重置月份選擇
         function resetMonthSelection(event) {
             const yearLabel = currentYear === 'all' ? "2023-2025年平均" : `${currentYear}年度`;
             const data = currentYear === 'all' ? avgData : rawData[currentYear];
@@ -190,7 +188,7 @@
                     plugins: { legend: { display: false } },
                     scales: { x: { grid: { display: false } }, y: { beginAtZero: true } },
                     onClick: (e, elements) => {
-                        e.native.stopPropagation(); // 防止觸發 body 的點擊事件
+                        e.native.stopPropagation();
                         if (elements.length > 0) {
                             const index = elements[0].index;
                             const monthData = barChart.data.datasets[0].data[index];
