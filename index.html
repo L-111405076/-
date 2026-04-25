@@ -9,18 +9,19 @@
     <style>
         body { background-color: #f8fafc; font-family: "Microsoft JhengHei", sans-serif; overflow-x: hidden; }
         .chart-container { position: relative; width: 100%; height: 180px; }
-        .main-chart-container { position: relative; width: 100%; height: 320px; }
+        .main-chart-container { position: relative; width: 100%; height: 300px; }
         .bar-chart-container { position: relative; width: 100%; height: 180px; }
+        .sub-text { color: #94a3b8; font-size: 0.75rem; font-weight: bold; margin-top: -2px; }
     </style>
 </head>
-<body class="p-4 lg:p-6">
+<body class="p-4 lg:p-6" onclick="resetMonthSelection(event)">
     <div class="max-w-7xl mx-auto grid grid-cols-12 gap-4">
         
         <div class="col-span-12 lg:col-span-3 flex flex-col gap-4">
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h3 id="attainTitle" class="text-gray-500 text-xs font-bold mb-1">PM2.5 達標率</h3>
+                <h3 class="text-gray-800 text-lg font-bold">PM2.5 達標天數百分比</h3>
+                <div id="attainSub" class="sub-text mb-2">2023-2025年平均</div>
                 <div id="bigNumber" class="text-5xl font-black transition-all duration-300">--%</div>
-                <div id="statusLabel" class="text-sm font-bold text-gray-400 mt-1">全年度平均</div>
                 <div id="alertText" class="mt-3 px-2 py-1 rounded-lg font-bold text-sm text-center">計算中...</div>
                 <div id="guideBox" class="mt-3 p-2 bg-gray-50 rounded-lg text-xs text-gray-500 border-l-4 border-gray-300">
                     載入中...
@@ -28,7 +29,8 @@
             </div>
 
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h3 id="pieTitle" class="text-gray-700 text-sm font-bold mb-2 text-center">優質天數佔比</h3>
+                <h3 class="text-gray-800 text-sm font-bold text-center">優良天數占比</h3>
+                <div id="pieSub" class="sub-text text-center mb-2">2023-2025年平均</div>
                 <div class="chart-container">
                     <canvas id="pieChart"></canvas>
                 </div>
@@ -43,12 +45,12 @@
             <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <h3 id="mainTitle" class="text-lg font-bold text-gray-800">PM2.5 趨勢總覽 (三年平均)</h3>
-                        <p class="text-xs text-gray-400">點擊長條圖可查看特定月份詳情</p>
+                        <h3 id="mainTitle" class="text-lg font-bold text-gray-800">PM2.5 趨勢總覽</h3>
+                        <div id="mainSub" class="sub-text">2023-2025年平均</div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <select id="yearFilter" class="border rounded px-2 py-1 text-xs bg-white border-gray-300 font-bold">
-                            <option value="all">顯示三年平均</option>
+                        <select id="yearFilter" class="border rounded px-2 py-1 text-xs bg-white border-gray-300 font-bold" onclick="event.stopPropagation()">
+                            <option value="all">2023-2025年平均</option>
                             <option value="2025">2025 年度</option>
                             <option value="2024">2024 年度</option>
                             <option value="2023">2023 年度</option>
@@ -63,7 +65,8 @@
 
                 <div class="my-4 border-t border-gray-50"></div>
 
-                <h4 id="barTitle" class="text-center text-sm font-bold text-gray-500 mb-2">月份平均濃度分布 (三年平均)</h4>
+                <h4 class="text-center text-sm font-bold text-gray-500">月份平均濃度分布</h4>
+                <div id="barSub" class="sub-text text-center mb-2">2023-2025年平均</div>
                 <div class="bar-chart-container">
                     <canvas id="barChart"></canvas>
                 </div>
@@ -91,15 +94,18 @@
             return 45;
         }
 
-        // 更新左側面板與標題
+        // 更新 UI 副標題與標註文字
+        function updateSubtexts(label) {
+            document.getElementById('attainSub').innerText = label;
+            document.getElementById('pieSub').innerText = label;
+            document.getElementById('mainSub').innerText = label;
+            document.getElementById('barSub').innerText = label;
+        }
+
         function updateSidePanel(pmValue, contextLabel) {
             const rate = calculateAttainRate(pmValue);
-            const yearText = currentYear === 'all' ? "三年平均" : `${currentYear}年度`;
-            
-            // 更新達標率與圓餅圖標題
             document.getElementById('bigNumber').innerText = rate + '%';
-            document.getElementById('statusLabel').innerText = contextLabel;
-            document.getElementById('pieTitle').innerText = `${contextLabel} 優質佔比`;
+            updateSubtexts(contextLabel);
             
             const el = document.getElementById('bigNumber');
             el.style.color = rate >= 85 ? '#22c55e' : (rate >= 70 ? '#eab308' : '#ef4444');
@@ -123,13 +129,8 @@
         function updateDashboard(year) {
             currentYear = year;
             const data = year === 'all' ? avgData : rawData[year];
-            const titleSuffix = year === 'all' ? "(三年平均)" : `(${year}年度)`;
+            const yearLabel = year === 'all' ? "2023-2025年平均" : `${year}年度`;
             
-            // 更新所有圖表的動態標題
-            document.getElementById('mainTitle').innerText = `PM2.5 趨勢總覽 ${titleSuffix}`;
-            document.getElementById('attainTitle').innerText = year === 'all' ? "三年平均達標率" : `${year}年度達標率`;
-            document.getElementById('barTitle').innerText = `月份平均濃度分布 ${titleSuffix}`;
-
             lineChart.data.datasets[0].data = data;
             lineChart.update();
 
@@ -138,7 +139,18 @@
             barChart.update();
 
             const yearAvg = (data.reduce((a, b) => a + b, 0) / 12).toFixed(1);
-            updateSidePanel(yearAvg, year === 'all' ? "三年平均" : `${year}年度`);
+            updateSidePanel(yearAvg, yearLabel);
+        }
+
+        // 點擊空白處重置月份選擇
+        function resetMonthSelection(event) {
+            const yearLabel = currentYear === 'all' ? "2023-2025年平均" : `${currentYear}年度`;
+            const data = currentYear === 'all' ? avgData : rawData[currentYear];
+            const yearAvg = (data.reduce((a, b) => a + b, 0) / 12).toFixed(1);
+            
+            barChart.data.datasets[0].backgroundColor = data.map(() => '#cbd5e1');
+            barChart.update();
+            updateSidePanel(yearAvg, yearLabel);
         }
 
         window.onload = function() {
@@ -178,15 +190,15 @@
                     plugins: { legend: { display: false } },
                     scales: { x: { grid: { display: false } }, y: { beginAtZero: true } },
                     onClick: (e, elements) => {
+                        e.native.stopPropagation(); // 防止觸發 body 的點擊事件
                         if (elements.length > 0) {
                             const index = elements[0].index;
                             const monthData = barChart.data.datasets[0].data[index];
                             barChart.data.datasets[0].backgroundColor = barChart.data.datasets[0].data.map((_, i) => i === index ? '#3b82f6' : '#cbd5e1');
                             barChart.update();
                             
-                            // 點擊月份時，更新圓餅圖與標籤為該月份
-                            const monthName = monthLabels[index];
-                            updateSidePanel(monthData, monthName);
+                            const yearPrefix = currentYear === 'all' ? "2023-2025" : currentYear;
+                            updateSidePanel(monthData, `${yearPrefix} / ${monthLabels[index]}`);
                         }
                     }
                 }
